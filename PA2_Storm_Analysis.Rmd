@@ -60,7 +60,9 @@ crop_num <- crop_num[order(-as.numeric(as.character(crop_num$V2))), ]
 
 ## Results
 The charts show the seven most relevant events related to human harm and financial impact.  
-Preparing data to plot results in *pie chart* and *bar plot* formats. As in this report the bar plot is using base plot system, the bar plot code is in the plotting results session.
+Preparing data to plot results in *pie chart* and *bar plot* formats. As in this report the bar plot is using base plot system, the bar plot code is in the plotting results session.  
+As in the figures below, the most harmful event in the US is 'Tornado' with 37% of total *fatalities* and 65% of *injuries* related to **events** on NOAA storm database.
+Tornado still the most significant event when looking *financial damage* on properties, with 30% of total financial damages. When evaluating *financial damages* on **crop**, the most significant event is *hail* with 42% of total financial damages.
 
 ```{r, echo=TRUE, cache=TRUE}
 ### Evaluating fatalities data
@@ -140,3 +142,4 @@ barplot(as.numeric(as.character(crop_num$V2[1:7]))/1000,
         ylab = "US$ Amount (K)",
         )
 ```
+
