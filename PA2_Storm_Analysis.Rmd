@@ -1,0 +1,100 @@
+---
+title: "NOAAs Storm database analysis"
+author: "Sergio Siqueira"
+date: "August 21, 2014"
+output: html_document
+---
+
+## Synopsis
+Coursera's Reproducible Research peer assessment 2 intent to explore the U.S. National Oceanic and Atmospheric Administration's (NOAA) storm database. This database tracks characteristics of major storms and weather events in the United States, including when and where they occur, as well as estimates of any fatalities, injuries, and property damage.  
+The objective on peer assessment 2 is to explore NOAA Storm Database to answer these two questions:  
+1. **Across the United States, which types of events are most harmful with respect to population health?**  
+2. **Across the United States, which types of events have the greatest economic consequences?**  
+  
+This analysis provide relevant information to help identify critical areas and priorities to apply resources depending on the event type. 
+
+## Data Processing
+*Data source*
+As mentioned above, the analysis is based on NOAA's Storm Database, downloaded from website below:  
+- https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2  
+File is downloaded to the working directory and then loaded into RStudio uncompressed to be processed and analyzed. The next code chunk check if the file exists in the **working directory**, if not, then download the file from the above URL. When file exists in the directory, the data is loaded into 'storm_data' variable.
+
+```{r, echo=TRUE, cache=TRUE}
+if (!file.exists("repdata-data-StormData.csv.bz2")) {
+      fileurl <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2"
+      download.file(fileurl, destfile = "./repdata-data-StormData.csv.bz2", method = "curl")      
+}
+con <- bzfile("repdata-data-StormData.csv.bz2", "rt")
+storm_data <- read.csv(con, header = T, sep = ",")
+close(con)
+```
+
+To be able to answer the first question described in the synopsis, we need to identify the relationship between *'Event Type'* (EVTYPE variable) and human harm, indicated by *'Fatalities'* and *'Injuries'* (FATALITIES and INJURIES variables).  
+
+For the second question, identify the relationship between *'Event Type'* and *'Property Damages'*, *'Crop Damages'*. All these variables listed in the "EVTYPE", "PROPDMG", "CROPDMG" respectively.
+
+The next code chunk sumarizes 'fatalities' and 'injuries' data to provide insights based on Event types for both questions.
+
+```{r, echo=TRUE, cache=TRUE}
+### Preparing the data related to human harm
+fatalities <- rowsum(storm_data$FATALITIES, storm_data$EVTYPE, reorder = F, na.rm = T)
+injuries <- rowsum(storm_data$INJURIES, storm_data$EVTYPE, reorder = F, na.rm = T)
+human_fatalities <- data.frame(cbind(event = rownames(fatalities), fatalities), row.names = NULL)
+human_injuries <- data.frame(cbind(event = rownames(injuries), injuries), row.names = NULL)
+### Identifying the most significant events for humans
+human_fatalities <- human_fatalities[order(-as.numeric(as.character(human_fatalities$V2))), ]
+human_injuries <- human_injuries[order(-as.numeric(as.character(human_injuries$V2))), ]
+```
+
+```{r, echo=TRUE, cache=TRUE}
+### Preparing the data related to financial damages
+property <- rowsum(storm_data$PROPDMG, storm_data$EVTYPE, reorder = F, na.rm = T)
+crop <- rowsum(storm_data$CROPDMG, storm_data$EVTYPE, reorder = F, na.rm = T)
+property_num <- data.frame(cbind(event = rownames(property), property), row.names = NULL)
+crop_num <- data.frame(cbind(event = rownames(crop), crop), row.names = NULL)
+property_num <- property_num[order(-as.numeric(as.character(property_num$V2))), ]
+crop_num <- crop_num[order(-as.numeric(as.character(crop_num$V2))), ]
+```
+
+## Results
+
+
+```{r, echo=TRUE, cache=TRUE}
+par(mfrow = c(1,2))
+### Evaluating fatalities data
+total_fatalities <- c(round(as.numeric(as.character(human_fatalities$V2[1:7]))/sum(storm_data$FATALITIES)*100))
+slices <- c(as.numeric(as.character(human_fatalities$V2[1:7])), 
+            sum(as.numeric(as.character(human_fatalities$V2))) - sum(as.numeric(as.character(human_fatalities$V2[1:7]))))
+lbls <- c(paste(as.character(human_fatalities$event[1:7]), total_fatalities[1:7], "%"), 
+          paste("Other", 100 - sum(total_fatalities), "%"))
+pie(slices, labels = lbls, main = "Fatalities Percent by Event", clockwise = T, cex = 0.5)
+### Evaluating injuries data
+total_injuries <- c(round(as.numeric(as.character(human_injuries$V2[1:7]))/sum(storm_data$INJURIES)*100))
+slices <- c(as.numeric(as.character(human_injuries$V2[1:7])), 
+            sum(as.numeric(as.character(human_injuries$V2))) - sum(as.numeric(as.character(human_injuries$V2[1:7]))))
+lbls <- c(paste(as.character(human_injuries$event[1:7]), total_injuries[1:7], "%"), 
+          paste("Other", 100 - sum(total_injuries), "%"))
+pie(slices, labels = lbls, main = "Injuries Percent by Event", clockwise = T, cex = 0.5)
+```
+
+Plotting results
+
+```{r, echo=TRUE, cache=TRUE}
+### Plotting information
+par(mfrow = c(1,2))
+barplot(as.numeric(as.character(human_fatalities$V2[1:7])), 
+        names.arg = human_fatalities$event[1:7], 
+        las = 2, 
+        main = "Five most significant events", 
+        cex.axis = 0.7,
+        cex.names = 0.5,
+        ylab = "Number of Fatalities",
+        )
+barplot(as.numeric(as.character(human_injuries$V2[1:7])), names.arg = human_injuries$event[1:7], las = 2,
+        main = "Five most significant events",
+        cex.axis = 0.7,
+        cex.names = 0.5,
+        ylab = "Number of Injuries",
+        )
+```
+
