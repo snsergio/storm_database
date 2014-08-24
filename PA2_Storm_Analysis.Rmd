@@ -20,6 +20,8 @@ As mentioned above, the analysis is based on NOAA's Storm Database, downloaded f
 File is downloaded to the working directory and then loaded into RStudio uncompressed to be processed and analyzed. The next code chunk check if the file exists in the **working directory**, if not, then download the file from the above URL. When file exists in the directory, the data is loaded into 'storm_data' variable.
 
 ```{r, echo=TRUE, cache=TRUE}
+library(markdown)
+library(knitr)
 if (!file.exists("repdata-data-StormData.csv.bz2")) {
       fileurl <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2"
       download.file(fileurl, destfile = "./repdata-data-StormData.csv.bz2", method = "curl")      
@@ -57,44 +59,84 @@ crop_num <- crop_num[order(-as.numeric(as.character(crop_num$V2))), ]
 ```
 
 ## Results
-
+The charts show the seven most relevant events related to human harm and financial impact.  
+Preparing data to plot results in *pie chart* and *bar plot* formats. As in this report the bar plot is using base plot system, the bar plot code is in the plotting results session.
 
 ```{r, echo=TRUE, cache=TRUE}
-par(mfrow = c(1,2))
 ### Evaluating fatalities data
 total_fatalities <- c(round(as.numeric(as.character(human_fatalities$V2[1:7]))/sum(storm_data$FATALITIES)*100))
-slices <- c(as.numeric(as.character(human_fatalities$V2[1:7])), 
+slices_fatalities <- c(as.numeric(as.character(human_fatalities$V2[1:7])), 
             sum(as.numeric(as.character(human_fatalities$V2))) - sum(as.numeric(as.character(human_fatalities$V2[1:7]))))
-lbls <- c(paste(as.character(human_fatalities$event[1:7]), total_fatalities[1:7], "%"), 
+lbls_fatalities <- c(paste(as.character(human_fatalities$event[1:7]), total_fatalities[1:7], "%"), 
           paste("Other", 100 - sum(total_fatalities), "%"))
-pie(slices, labels = lbls, main = "Fatalities Percent by Event", clockwise = T, cex = 0.5)
 ### Evaluating injuries data
 total_injuries <- c(round(as.numeric(as.character(human_injuries$V2[1:7]))/sum(storm_data$INJURIES)*100))
-slices <- c(as.numeric(as.character(human_injuries$V2[1:7])), 
+slices_injuries <- c(as.numeric(as.character(human_injuries$V2[1:7])), 
             sum(as.numeric(as.character(human_injuries$V2))) - sum(as.numeric(as.character(human_injuries$V2[1:7]))))
-lbls <- c(paste(as.character(human_injuries$event[1:7]), total_injuries[1:7], "%"), 
+lbls_injuries <- c(paste(as.character(human_injuries$event[1:7]), total_injuries[1:7], "%"), 
           paste("Other", 100 - sum(total_injuries), "%"))
-pie(slices, labels = lbls, main = "Injuries Percent by Event", clockwise = T, cex = 0.5)
+### Evaluating property damage data
+total_propdmg <- c(round(as.numeric(as.character(property_num$V2[1:7]))/sum(storm_data$PROPDMG)*100))
+slices_prop <- c(as.numeric(as.character(property_num$V2[1:7])), 
+            sum(as.numeric(as.character(property_num$V2))) - sum(as.numeric(as.character(property_num$V2[1:7]))))
+lbls_prop <- c(paste(as.character(property_num$event[1:7]), total_propdmg[1:7], "%"), 
+          paste("Other", 100 - sum(total_propdmg), "%"))
+### Evaluating crop damage data
+total_cropdmg <- c(round(as.numeric(as.character(crop_num$V2[1:7]))/sum(storm_data$CROPDMG)*100))
+slices_crop <- c(as.numeric(as.character(crop_num$V2[1:7])), 
+            sum(as.numeric(as.character(crop_num$V2))) - sum(as.numeric(as.character(crop_num$V2[1:7]))))
+lbls_crop <- c(paste(as.character(crop_num$event[1:7]), total_cropdmg[1:7], "%"), 
+          paste("Other", 100 - sum(total_cropdmg), "%"))
 ```
 
-Plotting results
+Plotting results related to human harm
 
 ```{r, echo=TRUE, cache=TRUE}
 ### Plotting information
-par(mfrow = c(1,2))
+par(mfrow = c(2,2), pty = "m")
+pie(slices_fatalities, labels = lbls_fatalities, main = "Fatalities Percent by Event", 
+    clockwise = T, cex = 0.5)
+pie(slices_injuries, labels = lbls_injuries, main = "Injuries Percent by Event", 
+    clockwise = T, cex = 0.5)
 barplot(as.numeric(as.character(human_fatalities$V2[1:7])), 
         names.arg = human_fatalities$event[1:7], 
         las = 2, 
-        main = "Five most significant events", 
+        main = "Seven most significant events", 
         cex.axis = 0.7,
         cex.names = 0.5,
         ylab = "Number of Fatalities",
         )
 barplot(as.numeric(as.character(human_injuries$V2[1:7])), names.arg = human_injuries$event[1:7], las = 2,
-        main = "Five most significant events",
+        main = "Seven most significant events",
         cex.axis = 0.7,
         cex.names = 0.5,
         ylab = "Number of Injuries",
         )
 ```
 
+Plotting results related to properties and crop damages
+
+```{r, echo=TRUE, cache=TRUE}
+### Plotting information
+par(mfrow = c(2,2), pty = "m")
+pie(slices_prop, labels = lbls_prop, main = "Property Damages Percent by Event", 
+    clockwise = T, cex = 0.5)
+pie(slices_crop, labels = lbls_crop, main = "Crop Damages Percent by Event", 
+    clockwise = T, cex = 0.5)
+barplot(as.numeric(as.character(property_num$V2[1:7]))/1000, 
+        names.arg = property_num$event[1:7], 
+        las = 2, 
+        main = "Seven most significant events", 
+        cex.axis = 0.7,
+        cex.names = 0.5,
+        ylab = "US$ Amount (K)",
+        )
+barplot(as.numeric(as.character(crop_num$V2[1:7]))/1000,
+        names.arg = crop_num$event[1:7], 
+        las = 2,
+        main = "Seven most significant events",
+        cex.axis = 0.7,
+        cex.names = 0.5,
+        ylab = "US$ Amount (K)",
+        )
+```
